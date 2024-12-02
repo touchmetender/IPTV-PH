@@ -1,4 +1,4 @@
-name: Sync and Generate Playlists
+name: Sync and Generate M3U File
 
 on:
   schedule:
@@ -27,22 +27,25 @@ jobs:
         git merge upstream/main --allow-unrelated-histories
         git push origin main
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
+    - name: Generate M3U file
       run: |
-        python -m pip install --upgrade pip
+        #!/bin/bash
+        # Assuming the playlist file is named PHPlaylist in the root directory
+        PLAYLIST_FILE=PHPlaylist
+        OUTPUT_FILE=playlist.m3u
 
-    - name: Generate Playlists
+        echo "#EXTM3U" > $OUTPUT_FILE
+
+        while IFS= read -r line
+        do
+          if [[ ! -z "$line" ]]; then
+            echo "#EXTINF:-1,$line" >> $OUTPUT_FILE
+            echo "$line" >> $OUTPUT_FILE
+          fi
+        done < "$PLAYLIST_FILE"
+
+    - name: Commit M3U file
       run: |
-        python generate_playlists.py
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
-        publish_branch: gh-pages
+        git add playlist.m3u
+        git commit -m "Update playlist.m3u"
+        git push
