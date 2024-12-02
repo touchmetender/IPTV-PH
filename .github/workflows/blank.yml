@@ -18,7 +18,7 @@ jobs:
       - name: Checkout upstream repository
         uses: actions/checkout@v2
         with:
-          repository: someuser/iptv
+          repository: GRFFZN/GRFFZN
           ref: main
           path: upstream
 
