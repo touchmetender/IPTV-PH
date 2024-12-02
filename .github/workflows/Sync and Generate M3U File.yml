@@ -1,0 +1,51 @@
+name: Sync and Generate M3U File
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # This will run every day at midnight
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Git
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+
+    - name: Add upstream repository
+      run: |
+        git remote add upstream https://github.com/touchmetender/IPTV-PH.git
+        git fetch upstream
+        git merge upstream/main --allow-unrelated-histories
+        git push origin main
+
+    - name: Generate M3U file
+      run: |
+        #!/bin/bash
+        # Assuming the playlist file is named PHPlaylist in the root directory
+        PLAYLIST_FILE=PHPlaylist
+        OUTPUT_FILE=playlist.m3u
+
+        echo "#EXTM3U" > $OUTPUT_FILE
+
+        while IFS= read -r line
+        do
+          if [[ ! -z "$line" ]]; then
+            echo "#EXTINF:-1,$line" >> $OUTPUT_FILE
+            echo "$line" >> $OUTPUT_FILE
+          fi
+        done < "$PLAYLIST_FILE"
+
+    - name: Commit M3U file
+      run: |
+        git add playlist.m3u
+        git commit -m "Update playlist.m3u"
+        git push
